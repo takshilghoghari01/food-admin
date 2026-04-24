@@ -33,32 +33,23 @@ const Orders = () => {
   }, []);
 
   const doneCashOrder = async (id) => {
-    const originalCash = [...cashOrders];
-    const originalPending = [...pendingOrders];
-    try {
-      await axios.put(
-  `/api/admin/orders/${id}/status`,
-  {
-    status: "processing", // ❌ WRONG
-  },
-     {
-    withCredentials: true, // 🔥 VERY IMPORTANT (sessions)
-  });
-      setCashOrders(cashOrders.filter((o) => o._id !== id));
-      const updatedOrder = {
-        ...cashOrders.find((o) => o._id === id),
-        status: "pending",
-      };
-      setPendingOrders([...pendingOrders, updatedOrder]);
-      fetchOrders(); // Refetch to ensure consistency
-    } catch (err) {
-      console.error("Error confirming cash order:", err);
-      setCashOrders(originalCash);
-      setPendingOrders(originalPending);
-      alert("Failed to confirm cash order. Please try again.");
-    }
-  };
+  try {
+    await axios.put(
+      `/api/admin/orders/${id}/status`,
+      {
+        status: "pending", // ✅ FIXED
+      },
+      {
+        withCredentials: true,
+      }
+    );
 
+    fetchOrders(); // ✅ ONLY this (no manual state)
+  } catch (err) {
+    console.error("Error confirming cash order:", err);
+    alert("Failed to confirm cash order.");
+  }
+};
   const startProcessing = async (id) => {
     const originalPending = [...pendingOrders];
     const originalProcessing = [...processingOrders];
@@ -87,35 +78,22 @@ const Orders = () => {
   };
 
 const completeOrder = async (id) => {
-  const originalProcessing = [...processingOrders];
   try {
     await axios.put(
       `/api/admin/orders/${id}/status`,
       {
-        status: "completed", // ✅ FIXED
+        status: "completed",
       },
       {
         withCredentials: true,
       }
     );
 
-    setProcessingOrders(processingOrders.filter((o) => o._id !== id));
-    fetchOrders();
+    fetchOrders(); // ✅ ONLY this
   } catch (err) {
     console.error("Error completing order:", err);
-    setProcessingOrders(originalProcessing);
     alert("Failed to complete order. Please try again.");
   }
-};
-  const handleRowClick = (order, e) => {
-    if (e.target.closest("button")) return; // Don't trigger on buttons
-    setSelectedOrder(order);
-    setShowDetails(true);
-  };
-
-  const closeDetails = () => {
-  setShowDetails(false);
-  setSelectedOrder(null);
 };
 
   return (
